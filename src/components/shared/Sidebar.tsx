@@ -1,0 +1,155 @@
+"use client"
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { 
+  Users, 
+  Settings, 
+  LogOut, 
+  BookOpen,
+  LayoutDashboard,
+  CalendarDays,
+  CreditCard,
+  FileText,
+  ClipboardCheck,
+  BarChart3,
+  Globe,
+  Lock,
+  Megaphone,
+  MessageSquare,
+  Star,
+  Briefcase,
+  FileEdit,
+  GraduationCap,
+  Package
+} from 'lucide-react'
+
+// Dynamic configuration based on user roles
+const NAV_CONFIG = {
+  SUPER_ADMIN: [
+    { name: 'Dashboard', href: '/tenant/admin', icon: LayoutDashboard },
+    { name: 'Academics', href: '/tenant/admin/academics', icon: BookOpen },
+    { name: 'Students', href: '/tenant/admin/students', icon: Users },
+    { name: 'HR & Staff', href: '/tenant/admin/hr', icon: Briefcase },
+    { name: 'Inventory & Assets', href: '/tenant/admin/inventory', icon: Package },
+    { name: 'Bursary', href: '/tenant/admin/bursary', icon: CreditCard },
+    { name: 'Attendance', href: '/tenant/admin/attendance', icon: ClipboardCheck },
+    { name: 'Analytics', href: '/tenant/admin/analytics', icon: BarChart3 },
+    { name: 'Broadcasts', href: '/tenant/admin/broadcast', icon: Megaphone },
+    { name: 'Roles & Permissions', href: '/tenant/admin/roles', icon: Lock },
+    { name: 'School Settings', href: '/tenant/admin/settings', icon: Settings },
+  ],
+  TEACHER: [
+    { name: 'Dashboard', href: '/tenant/teacher', icon: LayoutDashboard },
+    { name: 'My Classes', href: '/tenant/teacher/classes', icon: Users },
+    { name: 'Lesson Notes', href: '/tenant/teacher/notes', icon: FileText },
+    { name: 'Scores & Grades', href: '/tenant/teacher/scores', icon: BookOpen },
+    { name: 'Assignments', href: '/tenant/teacher/assignments', icon: FileEdit },
+    { name: 'Exams & CBT', href: '/tenant/teacher/exams', icon: GraduationCap },
+    { name: 'Timetable', href: '/tenant/teacher/timetable', icon: CalendarDays },
+    { name: 'HR Hub', href: '/tenant/teacher/hr', icon: Briefcase },
+  ],
+  STUDENT: [
+    { name: 'Dashboard', href: '/tenant/student', icon: LayoutDashboard },
+    { name: 'My Grades', href: '/tenant/student/grades', icon: BookOpen },
+    { name: 'Assignments', href: '/tenant/student/assignments', icon: FileEdit },
+    { name: 'Exams & CBT', href: '/tenant/student/exams', icon: GraduationCap },
+    { name: 'Timetable', href: '/tenant/student/timetable', icon: CalendarDays },
+    { name: 'Fees & Invoices', href: '/tenant/student/fees', icon: CreditCard },
+    { name: 'Feedback & Ratings', href: '/tenant/parent/feedback', icon: Star },
+  ],
+  PARENT: [
+    { name: 'Dashboard', href: '/tenant/parent', icon: LayoutDashboard },
+    { name: 'My Wards', href: '/tenant/parent/wards', icon: Users },
+    { name: 'Pay Fees', href: '/tenant/parent/fees', icon: CreditCard },
+    { name: 'Feedback & Ratings', href: '/tenant/parent/feedback', icon: MessageSquare },
+  ],
+  PLATFORM_OWNER: [
+    { name: 'Platform Overview', href: '/platform', icon: Globe },
+    { name: 'Provisioned Schools', href: '/platform/schools', icon: BookOpen },
+    { name: 'Global Billing', href: '/platform/billing', icon: CreditCard },
+  ]
+}
+
+export default function Sidebar({ 
+  userRole = 'SUPER_ADMIN',
+  isOpen = false,
+  setIsOpen = () => {}
+}: { 
+  userRole?: string
+  isOpen?: boolean
+  setIsOpen?: (open: boolean) => void
+}) {
+  const pathname = usePathname()
+  
+  // Cast safety: In production, ensure userRole strictly matches keys
+  const links = NAV_CONFIG[userRole as keyof typeof NAV_CONFIG] || NAV_CONFIG.SUPER_ADMIN
+
+  return (
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-gray-900/80 md:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col bg-[#788B81] text-[#F4F1EC] border-r border-[#64766C]
+        transition-transform duration-300 ease-in-out md:static md:translate-x-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex h-16 items-center justify-between border-b border-[#64766C] px-5">
+          <Link href={links[0].href} className="text-xl sm:text-2xl font-serif font-bold tracking-normal leading-none text-[#F4F1EC] hover:text-white transition-colors truncate">
+            OmniviewEdu
+          </Link>
+          {/* Mobile Close Button */}
+          <button 
+            className="md:hidden text-[#F4F1EC]/70 hover:text-white"
+            onClick={() => setIsOpen(false)}
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-4">
+          <nav className="space-y-1 px-2">
+            {links.map((link) => {
+              const isActive = pathname.startsWith(link.href)
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)} // Close menu on mobile when link is clicked
+                  className={`
+                  group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300
+                  ${isActive 
+                    ? 'bg-[#64766C] text-white shadow-inner border border-[#64766C]/50' 
+                    : 'text-[#F4F1EC]/70 hover:bg-[#64766C]/50 hover:text-white'}
+                `}
+              >
+                <link.icon 
+                  className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#F4F1EC]/60 group-hover:text-[#F4F1EC]/90'}`} 
+                />
+                {link.name}
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+      
+        <div className="border-t border-[#64766C] p-4 bg-[#64766C]/30">
+          <div className="flex items-center">
+            <div className="ml-3">
+              <p className="text-xs font-medium text-[#F4F1EC]/70 group-hover:text-white">Logged in as</p>
+              <p className="text-[10px] font-bold tracking-widest text-[#F4F1EC] uppercase mt-0.5">{userRole.replace('_', ' ')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
