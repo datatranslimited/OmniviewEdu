@@ -1,86 +1,166 @@
 "use client"
+
 import { useState } from "react"
-import { Banknote, Download, FileText, User } from "lucide-react"
+import { generatePayslips, updatePayslip } from "./actions"
+import { CheckCircle2, Receipt, AlertCircle, CalendarIcon, BanknoteIcon } from "lucide-react"
 
-export default function PayrollClient() {
-  const [payrollData] = useState([
-    { id: "PR-001", staffName: "Mr. Ayodele", role: "Math Teacher", baseSalary: 150000, allowances: 20000, deductions: 5000, netPay: 165000, status: "Paid" },
-    { id: "PR-002", staffName: "Mrs. Nwachukwu", role: "English Teacher", baseSalary: 160000, allowances: 25000, deductions: 8000, netPay: 177000, status: "Pending" },
-    { id: "PR-003", staffName: "Mr. Eze", role: "Science Teacher", baseSalary: 145000, allowances: 15000, deductions: 0, netPay: 160000, status: "Pending" },
-  ])
+export default function PayrollClient({ payslips, currentMonth, currentYear }: { payslips: any[], currentMonth: number, currentYear: number }) {
+  const [generating, setGenerating] = useState(false)
+  const [message, setMessage] = useState("")
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editAllowances, setEditAllowances] = useState(0)
+  const [editDeductions, setEditDeductions] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    setMessage("")
+    try {
+      const res = await generatePayslips(currentMonth, currentYear)
+      if (res.success) {
+        setMessage(`Generated ${res.count} new payslips for ${currentMonth}/${currentYear}`)
+      } else {
+        setMessage("Failed to generate payslips.")
+      }
+    } catch (e) {
+      setMessage("An error occurred.")
+    }
+    setGenerating(false)
+  }
+
+  const startEdit = (payslip: any) => {
+    setEditingId(payslip.id)
+    setEditAllowances(Number(payslip.allowances))
+    setEditDeductions(Number(payslip.deductions))
+  }
+
+  const handleSave = async (id: string, markAsPaid: boolean) => {
+    setIsSaving(true)
+    await updatePayslip(id, editAllowances, editDeductions, markAsPaid)
+    setEditingId(null)
+    setIsSaving(false)
+  }
+
+  const formatMoney = (val: any) => {
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(val))
   }
 
   return (
     <div className="space-y-6">
-      
-      <div className="flex justify-between items-center bg-[#2C3531] p-6 rounded-3xl shadow-xl">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 bg-white/10 rounded-full">
-            <Banknote className="w-8 h-8 text-[#F4F1EC]" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-[#F4F1EC]">October 2026 Payroll</h2>
-            <p className="text-sm text-[#788B81] mt-1">3 Staff Members • Total Net Pay: {formatCurrency(502000)}</p>
-          </div>
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#788B81]/20 flex flex-col md:flex-row items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#2C3531] flex items-center">
+            <CalendarIcon className="w-5 h-5 mr-2 text-[#788B81]" />
+            Payroll for {currentMonth}/{currentYear}
+          </h2>
+          <p className="text-[#788B81] text-sm mt-1">Generate payslips for staff with basic salary configured.</p>
         </div>
-        <button 
-          className="bg-[#F4F1EC] text-[#2C3531] hover:bg-white px-6 py-3 rounded-full text-sm font-bold shadow-lg transition-transform active:scale-95 flex items-center"
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="mt-4 md:mt-0 bg-[#2C3531] text-white px-6 py-2 rounded-xl font-medium hover:bg-[#788B81] transition-colors disabled:opacity-50 flex items-center"
         >
-          Run Payroll
+          <Receipt className="w-5 h-5 mr-2" />
+          {generating ? "Generating..." : "Auto-Generate Payslips"}
         </button>
       </div>
 
-      <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-        <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-[#F4F1EC]/20 border-b border-[#788B81]/10">
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest">Staff Member</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-right">Base Salary</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-right">Allowances</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-right">Deductions</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-right">Net Pay</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-center">Payslip</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#788B81]/5">
-              {payrollData.map(pr => (
-                <tr key={pr.id} className="hover:bg-[#F4F1EC]/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-[#F4F1EC] flex items-center justify-center">
-                        <User className="w-5 h-5 text-[#788B81]" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-[#2C3531]">{pr.staffName}</p>
-                        <p className="text-xs font-medium text-[#788B81]">{pr.role}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-[#788B81]">{formatCurrency(pr.baseSalary)}</td>
-                  <td className="px-6 py-4 text-right font-medium text-emerald-600">+{formatCurrency(pr.allowances)}</td>
-                  <td className="px-6 py-4 text-right font-medium text-red-500">-{formatCurrency(pr.deductions)}</td>
-                  <td className="px-6 py-4 text-right font-bold text-[#2C3531] text-lg">{formatCurrency(pr.netPay)}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border
-                      ${pr.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                      {pr.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button className="p-2 bg-[#F4F1EC] hover:bg-[#2C3531] text-[#788B81] hover:text-[#F4F1EC] rounded-full transition-colors inline-flex items-center justify-center" title="Download PDF Payslip">
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {message && (
+        <div className="p-4 rounded-xl bg-emerald-50 text-emerald-700 flex items-center border border-emerald-200">
+          <CheckCircle2 className="w-5 h-5 mr-2" />
+          {message}
         </div>
+      )}
+
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#788B81]/20">
+        <h3 className="font-bold text-[#2C3531] mb-4">Generated Payslips</h3>
+        {payslips.length === 0 ? (
+          <div className="text-center py-8 text-[#788B81]">
+            No payslips generated for this month yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#788B81]/20">
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Staff</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Basic Salary</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Allowances</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Deductions</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Net Pay</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Status</th>
+                  <th className="py-3 px-4 text-sm font-semibold text-[#788B81]">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payslips.map((slip) => (
+                  <tr key={slip.id} className="border-b border-[#788B81]/10 hover:bg-[#FDFBF7]">
+                    <td className="py-4 px-4 font-medium text-[#2C3531]">
+                      {slip.staff.first_name} {slip.staff.last_name}
+                    </td>
+                    <td className="py-4 px-4 text-sm text-[#788B81]">{formatMoney(slip.basic_salary)}</td>
+                    <td className="py-4 px-4">
+                      {editingId === slip.id ? (
+                        <input
+                          type="number"
+                          value={editAllowances}
+                          onChange={(e) => setEditAllowances(Number(e.target.value))}
+                          className="w-24 border border-[#788B81]/30 rounded-lg px-2 py-1 text-sm outline-none"
+                        />
+                      ) : (
+                        <span className="text-sm text-[#788B81]">{formatMoney(slip.allowances)}</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4">
+                      {editingId === slip.id ? (
+                        <input
+                          type="number"
+                          value={editDeductions}
+                          onChange={(e) => setEditDeductions(Number(e.target.value))}
+                          className="w-24 border border-red-200 rounded-lg px-2 py-1 text-sm outline-none text-red-600"
+                        />
+                      ) : (
+                        <span className="text-sm text-red-500">{formatMoney(slip.deductions)}</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 font-bold text-emerald-600">
+                      {editingId === slip.id ? (
+                        formatMoney(Number(slip.basic_salary) + editAllowances - editDeductions)
+                      ) : (
+                        formatMoney(slip.net_pay)
+                      )}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        slip.status === "PAID" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700"
+                      }`}>
+                        {slip.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      {editingId === slip.id ? (
+                        <div className="flex items-center space-x-2">
+                          <button onClick={() => handleSave(slip.id, false)} disabled={isSaving} className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-200">Save</button>
+                          {slip.status === "DRAFT" && (
+                            <button onClick={() => handleSave(slip.id, true)} disabled={isSaving} className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-200">Pay</button>
+                          )}
+                          <button onClick={() => setEditingId(null)} className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+                        </div>
+                      ) : (
+                        slip.status === "DRAFT" && (
+                          <button onClick={() => startEdit(slip)} className="text-sm text-blue-600 font-bold hover:underline">
+                            Edit
+                          </button>
+                        )
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

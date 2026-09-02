@@ -48,6 +48,13 @@ model Tenant {
   weekly_lesson_notes   WeeklyLessonNote[]
   ai_weekly_digests     AiWeeklyDigest[]
   notification_logs     NotificationLog[]
+  class_staff_assignments ClassStaffAssignment[]
+  student_enrollments     StudentSessionEnrollment[]
+  exams                   Exam[]
+  exam_attempts           ExamAttempt[]
+  staff_attendances       StaffAttendance[]
+  leave_requests          LeaveRequest[]
+  payslips                Payslip[]
 
   @@map("tenants")
 }
@@ -85,9 +92,13 @@ model User {
   staff_profile     StaffProfile?
   student           Student?
   guardians         Guardian[]
-  class_arms        ClassArm[]        // as class teacher
+  class_assignments ClassStaffAssignment[] // SCD roles
   class_subjects    ClassSubject[]    // as subject teacher
   notification_logs NotificationLog[]
+  staff_attendances StaffAttendance[] @relation("StaffAttendance")
+  leave_requests    LeaveRequest[]    @relation("LeaveRequests")
+  reviewed_leaves   LeaveRequest[]    @relation("ReviewedLeaves")
+  payslips          Payslip[]         @relation("Payslips")
 
   @@unique([tenant_id, email])
   @@unique([tenant_id, phone_number])
@@ -110,6 +121,9 @@ model AcademicSession {
   created_at DateTime @default(now()) @db.Timestamptz
 
   terms AcademicTerm[]
+  student_enrollments  StudentSessionEnrollment[]
+  class_staff_assignments ClassStaffAssignment[]
+  class_subjects          ClassSubject[]
 
   @@map("academic_sessions")
 }
@@ -141,6 +155,7 @@ model AcademicTerm {
   student_term_reports StudentTermReport[]
   weekly_lesson_notes  WeeklyLessonNote[]
   ai_weekly_digests    AiWeeklyDigest[]
+  exams                Exam[]
 
   @@map("academic_terms")
 }
@@ -177,16 +192,42 @@ model ClassArm {
   class_level_id   String     @db.Uuid
   class_level      ClassLevel @relation(fields: [class_level_id], references: [id], onDelete: Cascade)
   name             String     @db.VarChar(50)
-  class_teacher_id String?    @db.Uuid
-  class_teacher    User?      @relation(fields: [class_teacher_id], references: [id], onDelete: SetNull)
   created_at       DateTime   @default(now()) @db.Timestamptz
 
   students             Student[]
   class_subjects       ClassSubject[]
   student_term_reports StudentTermReport[]
   ai_weekly_digests    AiWeeklyDigest[]
+  student_enrollments  StudentSessionEnrollment[]
+  staff_assignments    ClassStaffAssignment[]
 
   @@map("class_arms")
+}
+
+enum StaffClassRole {
+  CLASS_TEACHER
+  CLASS_MANAGER
+  LEVEL_COORDINATOR
+
+  @@map("staff_class_role")
+}
+
+model ClassStaffAssignment {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String          @db.Uuid
+  tenant         Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class_arm_id   String          @db.Uuid
+  class_arm      ClassArm        @relation(fields: [class_arm_id], references: [id], onDelete: Cascade)
+  session_id     String          @db.Uuid
+  session        AcademicSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  staff_id       String          @db.Uuid
+  staff          User            @relation(fields: [staff_id], references: [id], onDelete: Cascade)
+  role           StaffClassRole
+  created_at     DateTime        @default(now()) @db.Timestamptz
+
+  @@unique([class_arm_id, session_id, staff_id, role])
+  @@index([tenant_id, session_id])
+  @@map("class_staff_assignments")
 }
 
 // ============================================================================
@@ -210,6 +251,7 @@ model Student {
   photo_url            String?
   state_of_origin      String?   @db.VarChar(100)
   residential_address  String?
+  secure_link_pin      String?   @unique @db.VarChar(50)
   enrollment_date      DateTime? @default(now()) @db.Date
   is_active            Boolean?  @default(true)
   created_at           DateTime  @default(now()) @db.Timestamptz
@@ -219,11 +261,30 @@ model Student {
   student_virtual_accts StudentVirtualAccount[]
   student_scores        StudentSubjectScore[]
   student_term_reports  StudentTermReport[]
+  session_enrollments   StudentSessionEnrollment[]
+  exam_attempts         ExamAttempt[]
 
   @@unique([tenant_id, admission_number])
   @@index([tenant_id])
   @@index([current_class_arm_id])
   @@map("students")
+}
+
+model StudentSessionEnrollment {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String          @db.Uuid
+  tenant       Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  student_id   String          @db.Uuid
+  student      Student         @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  session_id   String          @db.Uuid
+  session      AcademicSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  class_arm_id String          @db.Uuid
+  class_arm    ClassArm        @relation(fields: [class_arm_id], references: [id], onDelete: Cascade)
+  created_at   DateTime        @default(now()) @db.Timestamptz
+
+  @@unique([student_id, session_id])
+  @@index([tenant_id, session_id, class_arm_id])
+  @@map("student_session_enrollments")
 }
 
 model Guardian {
@@ -274,21 +335,24 @@ model Subject {
 }
 
 model ClassSubject {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenant_id    String   @db.Uuid
-  tenant       Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  class_arm_id String   @db.Uuid
-  class_arm    ClassArm @relation(fields: [class_arm_id], references: [id], onDelete: Cascade)
-  subject_id   String   @db.Uuid
-  subject      Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
-  teacher_id   String?  @db.Uuid
-  teacher      User?    @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
-  created_at   DateTime @default(now()) @db.Timestamptz
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String          @db.Uuid
+  tenant       Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class_arm_id String          @db.Uuid
+  class_arm    ClassArm        @relation(fields: [class_arm_id], references: [id], onDelete: Cascade)
+  subject_id   String          @db.Uuid
+  subject      Subject         @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  session_id   String          @db.Uuid
+  session      AcademicSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  teacher_id   String?         @db.Uuid
+  teacher      User?           @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
+  created_at   DateTime        @default(now()) @db.Timestamptz
 
   student_scores      StudentSubjectScore[]
   weekly_lesson_notes WeeklyLessonNote[]
+  exams               Exam[]
 
-  @@unique([class_arm_id, subject_id])
+  @@unique([class_arm_id, subject_id, session_id])
   @@map("class_subjects")
 }
 
@@ -570,9 +634,178 @@ model StaffProfile {
   bank_name       String?  @db.VarChar(100)
   account_number  String?  @db.VarChar(50)
   account_name    String?  @db.VarChar(150)
+  
+  basic_salary    Decimal? @default(0.00) @db.Decimal(12, 2)
 
   created_at      DateTime @default(now()) @db.Timestamptz
   updated_at      DateTime @default(now()) @updatedAt @db.Timestamptz
 
   @@map("staff_profiles")
+}
+
+// ============================================================================
+// 17. CBT & EXAMS
+// ============================================================================
+
+model Exam {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id        String       @db.Uuid
+  tenant           Tenant       @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class_subject_id String       @db.Uuid
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [id], onDelete: Cascade)
+  term_id          String       @db.Uuid
+  term             AcademicTerm @relation(fields: [term_id], references: [id], onDelete: Cascade)
+  title            String       @db.VarChar(255)
+  duration_minutes Int          @default(30)
+  is_published     Boolean      @default(false)
+  created_at       DateTime     @default(now()) @db.Timestamptz
+  updated_at       DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  questions        Question[]
+  attempts         ExamAttempt[]
+
+  @@index([tenant_id, class_subject_id])
+  @@map("exams")
+}
+
+model Question {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exam_id    String   @db.Uuid
+  exam       Exam     @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  marks      Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  options    QuestionOption[]
+  student_answers StudentAnswer[]
+
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id String   @db.Uuid
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  text        String   @db.Text
+  is_correct  Boolean  @default(false)
+
+  student_answers StudentAnswer[]
+
+  @@map("question_options")
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+
+  @@map("exam_attempt_status")
+}
+
+model ExamAttempt {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String            @db.Uuid
+  tenant     Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  exam_id    String            @db.Uuid
+  exam       Exam              @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  student_id String            @db.Uuid
+  student    Student           @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  started_at DateTime          @default(now()) @db.Timestamptz
+  completed_at DateTime?       @db.Timestamptz
+  status     ExamAttemptStatus @default(IN_PROGRESS)
+  score      Int?
+
+  answers    StudentAnswer[]
+
+  @@unique([exam_id, student_id])
+  @@map("exam_attempts")
+}
+
+model StudentAnswer {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attempt_id         String         @db.Uuid
+  attempt            ExamAttempt    @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question_id        String         @db.Uuid
+  question           Question       @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  selected_option_id String         @db.Uuid
+  selected_option    QuestionOption @relation(fields: [selected_option_id], references: [id], onDelete: Cascade)
+
+  @@unique([attempt_id, question_id])
+  @@map("student_answers")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+
+  @@map("attendance_status")
+}
+
+model StaffAttendance {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String           @db.Uuid
+  tenant     Tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  staff_id   String           @db.Uuid
+  staff      User             @relation("StaffAttendance", fields: [staff_id], references: [id], onDelete: Cascade)
+  date       DateTime         @db.Date
+  status     AttendanceStatus @default(PRESENT)
+  notes      String?
+  created_at DateTime         @default(now()) @db.Timestamptz
+
+  @@unique([tenant_id, staff_id, date])
+  @@map("staff_attendance")
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("leave_status")
+}
+
+model LeaveRequest {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String      @db.Uuid
+  tenant       Tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  staff_id     String      @db.Uuid
+  staff        User        @relation("LeaveRequests", fields: [staff_id], references: [id], onDelete: Cascade)
+  start_date   DateTime    @db.Date
+  end_date     DateTime    @db.Date
+  reason       String      @db.Text
+  status       LeaveStatus @default(PENDING)
+  reviewed_by  String?     @db.Uuid
+  reviewer     User?       @relation("ReviewedLeaves", fields: [reviewed_by], references: [id], onDelete: SetNull)
+  created_at   DateTime    @default(now()) @db.Timestamptz
+  updated_at   DateTime    @default(now()) @updatedAt @db.Timestamptz
+
+  @@map("leave_requests")
+}
+
+enum PayslipStatus {
+  DRAFT
+  PAID
+
+  @@map("payslip_status")
+}
+
+model Payslip {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String        @db.Uuid
+  tenant       Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  staff_id     String        @db.Uuid
+  staff        User          @relation("Payslips", fields: [staff_id], references: [id], onDelete: Cascade)
+  month        Int
+  year         Int
+  basic_salary Decimal       @db.Decimal(12, 2)
+  allowances   Decimal       @default(0.00) @db.Decimal(12, 2)
+  deductions   Decimal       @default(0.00) @db.Decimal(12, 2)
+  net_pay      Decimal       @db.Decimal(12, 2)
+  status       PayslipStatus @default(DRAFT)
+  created_at   DateTime      @default(now()) @db.Timestamptz
+
+  @@unique([staff_id, month, year])
+  @@map("payslips")
 }

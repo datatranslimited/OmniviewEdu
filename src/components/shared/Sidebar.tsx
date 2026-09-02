@@ -42,8 +42,8 @@ const NAV_CONFIG = {
     { name: 'Dashboard', href: '/tenant/teacher', icon: LayoutDashboard },
     { name: 'My Classes', href: '/tenant/teacher/classes', icon: Users },
     { name: 'Lesson Notes', href: '/tenant/teacher/notes', icon: FileText },
-    { name: 'Scores & Grades', href: '/tenant/teacher/scores', icon: BookOpen },
     { name: 'Assignments', href: '/tenant/teacher/assignments', icon: FileEdit },
+    { name: 'Scores & Grades', href: '/tenant/teacher/scores', icon: BookOpen },
     { name: 'Exams & CBT', href: '/tenant/teacher/exams', icon: GraduationCap },
     { name: 'Timetable', href: '/tenant/teacher/timetable', icon: CalendarDays },
     { name: 'HR Hub', href: '/tenant/teacher/hr', icon: Briefcase },
@@ -115,8 +115,8 @@ export default function Sidebar({
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="space-y-1 px-2">
+        <div className="flex-1 overflow-y-auto py-4 scrollbar-hide">
+          <nav className="space-y-1.5 px-3">
             {links.map((link) => {
               const isActive = pathname.startsWith(link.href)
               return (
@@ -125,14 +125,15 @@ export default function Sidebar({
                   href={link.href}
                   onClick={() => setIsOpen(false)} // Close menu on mobile when link is clicked
                   className={`
-                  group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300
+                  group flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-300 relative overflow-hidden
                   ${isActive 
-                    ? 'bg-[#64766C] text-white shadow-inner border border-[#64766C]/50' 
-                    : 'text-[#F4F1EC]/70 hover:bg-[#64766C]/50 hover:text-white'}
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-transparent text-white border border-emerald-500/20 shadow-inner' 
+                    : 'text-[#F4F1EC]/70 hover:bg-white/5 hover:text-white'}
                 `}
               >
+                {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-r-full shadow-[0_0_10px_rgba(16,185,129,0.8)]" />}
                 <link.icon 
-                  className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#F4F1EC]/60 group-hover:text-[#F4F1EC]/90'}`} 
+                  className={`mr-3 h-5 w-5 flex-shrink-0 transition-transform duration-300 ${isActive ? 'text-emerald-400 scale-110' : 'text-[#F4F1EC]/60 group-hover:text-emerald-400 group-hover:scale-110'}`} 
                 />
                 {link.name}
               </Link>
@@ -141,11 +142,14 @@ export default function Sidebar({
         </nav>
       </div>
       
-        <div className="border-t border-[#64766C] p-4 bg-[#64766C]/30">
-          <div className="flex items-center">
+        <div className="border-t border-white/10 p-4 bg-gradient-to-t from-black/20 to-transparent">
+          <div className="flex items-center px-2 py-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shadow-inner">
+              {userRole.charAt(0)}
+            </div>
             <div className="ml-3">
-              <p className="text-xs font-medium text-[#F4F1EC]/70 group-hover:text-white">Logged in as</p>
-              <p className="text-[10px] font-bold tracking-widest text-[#F4F1EC] uppercase mt-0.5">{userRole.replace('_', ' ')}</p>
+              <p className="text-xs font-medium text-[#F4F1EC]/70 group-hover:text-emerald-400 transition-colors">Logged in as</p>
+              <p className="text-[10px] font-bold tracking-widest text-white uppercase mt-0.5 truncate">{userRole.replace('_', ' ')}</p>
             </div>
           </div>
         </div>

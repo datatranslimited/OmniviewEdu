@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import prisma from "@/lib/prisma"
+import { createClient } from "@/lib/supabase/server"
 import Sidebar from '@/components/shared/Sidebar'
 import TopHeader from '@/components/shared/TopHeader'
 
@@ -10,10 +11,22 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // --- MOCKED FOR FRONTEND-FIRST UI TESTING ---
-  const cookieStore = await cookies()
-  const mockRole = cookieStore.get('mock_role')?.value || 'SUPER_ADMIN'
-  const appUser = { role: mockRole, tenant: { name: "Omniview Academy" } }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/login')
+  }
+
+  const appUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { tenant: true }
+  })
+
+  if (!appUser) {
+    // Edge case where user exists in Auth but not Prisma
+    redirect('/auth/setup')
+  }
 
 
   return (

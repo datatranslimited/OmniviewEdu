@@ -36,25 +36,24 @@ export async function updateSession(request: NextRequest) {
   // Protect dashboard routes
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/register') &&
+    !request.nextUrl.pathname.startsWith('/auth/login') &&
+    !request.nextUrl.pathname.startsWith('/auth/setup') &&
     request.nextUrl.pathname.startsWith('/tenant')
   ) {
     // No user, redirect to login
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
   // If user is logged in and tries to access auth routes, redirect to their tenant path or a default dashboard
   if (
     user &&
-    (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))
+    (request.nextUrl.pathname.startsWith('/auth/login') || request.nextUrl.pathname.startsWith('/auth/setup'))
   ) {
-    // In a real app we'd fetch their tenant and role to route them properly.
-    // For now, redirect to a generic dashboard or setup page.
+    // We will let the tenant layout handle correct routing based on role
     const url = request.nextUrl.clone()
-    url.pathname = '/tenant/dashboard' 
+    url.pathname = '/tenant/admin/dashboard' 
     return NextResponse.redirect(url)
   }
 

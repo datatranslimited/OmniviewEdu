@@ -46,6 +46,7 @@ export default function StaffClient({ staffMembers }: { staffMembers: any[] }) {
 
       {/* Staff Table */}
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto flex-1">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -90,6 +91,7 @@ export default function StaffClient({ staffMembers }: { staffMembers: any[] }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Onboarding Modal */}

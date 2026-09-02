@@ -24,6 +24,7 @@ export default function QueriesClient() {
 
       <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
         <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 overflow-hidden">
+          <div className="overflow-x-auto flex-1">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#F4F1EC]/20 border-b border-[#788B81]/10">
@@ -62,6 +63,7 @@ export default function QueriesClient() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

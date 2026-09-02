@@ -112,3 +112,61 @@ export async function deleteClassArm(formData: FormData) {
     return { error: error.message || "Failed to delete" }
   }
 }
+
+export async function assignClassStaff(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Unauthorized" }
+
+  const appUser = await prisma.user.findUnique({ where: { id: user.id } })
+  if (!appUser || appUser.role !== 'SUPER_ADMIN') return { error: "Forbidden" }
+
+  const class_arm_id = formData.get("class_arm_id") as string
+  const session_id = formData.get("session_id") as string
+  const staff_id = formData.get("staff_id") as string
+  const role = formData.get("role") as any // 'CLASS_TEACHER', 'CLASS_MANAGER', 'LEVEL_COORDINATOR'
+
+  try {
+    await prisma.classStaffAssignment.upsert({
+      where: {
+        class_arm_id_session_id_staff_id_role: {
+          class_arm_id,
+          session_id,
+          staff_id,
+          role
+        }
+      },
+      update: {},
+      create: {
+        tenant_id: appUser.tenant_id,
+        class_arm_id,
+        session_id,
+        staff_id,
+        role
+      }
+    })
+    revalidatePath("/tenant/admin/academics/classes")
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message }
+  }
+}
+
+export async function removeClassStaff(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Unauthorized" }
+
+  const appUser = await prisma.user.findUnique({ where: { id: user.id } })
+  if (!appUser || appUser.role !== 'SUPER_ADMIN') return { error: "Forbidden" }
+
+  const assignment_id = formData.get("id") as string
+
+  try {
+    await prisma.classStaffAssignment.delete({ where: { id: assignment_id } })
+    revalidatePath("/tenant/admin/academics/classes")
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message }
+  }
+}

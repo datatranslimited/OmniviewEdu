@@ -1,205 +1,189 @@
 "use client"
-import { useState } from "react"
-import { Megaphone, Send, Users, Smartphone, Mail, Globe, CheckCircle2, History } from "lucide-react"
+import React, { useState, useTransition } from "react"
+import { Megaphone, Users, Smartphone, Mail, Send, CheckCircle2, History, AlertCircle } from "lucide-react"
+import { dispatchBroadcast } from "./actions"
+import { format } from "date-fns"
 
-export default function BroadcastClient() {
-  const [selectedAudience, setSelectedAudience] = useState("all_parents")
-  const [selectedChannels, setSelectedChannels] = useState({
-    sms: false,
-    email: true,
-    portal: true
-  })
-  const [isSending, setIsSending] = useState(false)
-  const [isSent, setIsSent] = useState(false)
+export default function BroadcastClient({ 
+  logs
+}: {
+  logs: any[]
+}) {
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  
+  const [messageText, setMessageText] = useState("")
 
-  const handleSend = () => {
-    setIsSending(true)
-    setTimeout(() => {
-      setIsSending(false)
-      setIsSent(true)
-      setTimeout(() => setIsSent(false), 3000)
-    }, 2000)
+  async function handleDispatch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+    const formData = new FormData(e.currentTarget)
+    
+    startTransition(async () => {
+      const res = await dispatchBroadcast(formData)
+      if (res.error) {
+        setError(res.error)
+      } else {
+        setSuccess(`Successfully broadcasted message to ${res.sentCount} recipients (out of ${res.totalFound} found).`)
+        setMessageText("") // Clear message on success
+      }
+    })
   }
 
-  const dummyHistory = [
-    { id: 1, title: "Mid-Term Break Announcement", date: "Oct 12, 2026", audience: "All Parents", channels: ["Email", "Portal"] },
-    { id: 2, title: "PTA Meeting Reminder", date: "Oct 05, 2026", audience: "All Parents", channels: ["SMS", "Email"] },
-    { id: 3, title: "Staff Briefing Rescheduled", date: "Sep 28, 2026", audience: "All Teachers", channels: ["Portal"] },
-  ]
-
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-sans text-[#2C3531] font-bold tracking-tight mb-2">School Broadcasts</h1>
-          <p className="text-[#788B81] font-medium leading-relaxed">Send important announcements to parents, students, or staff.</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      {/* Composer Side */}
+      <div className="lg:col-span-1 space-y-6">
         
-        {/* Compose Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-            <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 p-8 space-y-8">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center justify-between shadow-sm">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">×</button>
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-emerald-50 text-emerald-600 p-4 rounded-xl border border-emerald-100 flex items-center justify-between shadow-sm">
+            <span className="flex items-center text-sm"><CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0" /> {success}</span>
+            <button onClick={() => setSuccess(null)} className="text-emerald-400 hover:text-emerald-600">×</button>
+          </div>
+        )}
+
+        <div className="bg-[#2C3531] text-white p-6 rounded-[2.5rem] shadow-xl border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          
+          <div className="relative z-10">
+            <h2 className="text-xl font-bold flex items-center mb-6"><Megaphone className="w-5 h-5 mr-2 text-emerald-400" /> New Broadcast</h2>
+            
+            <form onSubmit={handleDispatch} className="space-y-5">
               
-              <div className="flex items-center space-x-3 mb-2 border-b border-[#788B81]/10 pb-4">
-                <div className="w-10 h-10 rounded-xl bg-[#788B81]/10 flex items-center justify-center">
-                  <Megaphone className="w-5 h-5 text-[#788B81]" />
-                </div>
-                <h2 className="text-xl font-sans font-bold text-[#2C3531]">Compose Message</h2>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Target Audience</label>
+                <select name="audience" required className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none">
+                  <option value="" className="text-gray-900">Select Audience...</option>
+                  <option value="ALL_PARENTS" className="text-gray-900">All Parents</option>
+                  <option value="ALL_STAFF" className="text-gray-900">All Staff (Teachers, Admins)</option>
+                  <option value="ALL_USERS" className="text-gray-900">Everyone</option>
+                </select>
               </div>
 
-              {/* Target Audience */}
-              <div>
-                <label className="block text-xs font-bold text-[#788B81] uppercase tracking-widest mb-3">1. Target Audience</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { id: 'all_parents', label: 'All Parents', icon: Users },
-                    { id: 'all_teachers', label: 'All Teachers', icon: Users },
-                    { id: 'all_students', label: 'All Students', icon: Users },
-                    { id: 'specific_class', label: 'Specific Class', icon: Users },
-                  ].map((aud) => (
-                    <button
-                      key={aud.id}
-                      onClick={() => setSelectedAudience(aud.id)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                        selectedAudience === aud.id 
-                          ? 'border-[#788B81] bg-[#F4F1EC] text-[#2C3531] shadow-sm' 
-                          : 'border-[#788B81]/10 hover:border-[#788B81]/30 hover:bg-[#F4F1EC]/30 text-[#788B81]'
-                      }`}
-                    >
-                      <aud.icon className={`w-6 h-6 mb-2 ${selectedAudience === aud.id ? 'text-[#788B81]' : 'text-[#788B81]/60'}`} />
-                      <span className="text-sm font-bold">{aud.label}</span>
-                    </button>
-                  ))}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Delivery Channel</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="relative cursor-pointer">
+                    <input type="radio" name="channel" value="SMS" className="peer sr-only" required defaultChecked />
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-white/60 peer-checked:bg-emerald-500/20 peer-checked:border-emerald-500/50 peer-checked:text-emerald-400 transition-all hover:bg-white/10">
+                      <Smartphone className="w-5 h-5 mb-1" />
+                      <span className="text-xs font-bold">SMS</span>
+                    </div>
+                  </label>
+                  <label className="relative cursor-pointer">
+                    <input type="radio" name="channel" value="EMAIL" className="peer sr-only" required />
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-white/60 peer-checked:bg-blue-500/20 peer-checked:border-blue-500/50 peer-checked:text-blue-400 transition-all hover:bg-white/10">
+                      <Mail className="w-5 h-5 mb-1" />
+                      <span className="text-xs font-bold">Email</span>
+                    </div>
+                  </label>
                 </div>
               </div>
 
-              {/* Channels */}
-              <div>
-                <label className="block text-xs font-bold text-[#788B81] uppercase tracking-widest mb-3">2. Delivery Channels</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button
-                    onClick={() => setSelectedChannels(prev => ({...prev, sms: !prev.sms}))}
-                    className={`flex items-center p-4 rounded-2xl border-2 transition-all ${
-                      selectedChannels.sms ? 'border-amber-500 bg-amber-50 text-amber-900 shadow-sm' : 'border-[#788B81]/10 hover:bg-[#F4F1EC]/30 text-[#788B81]'
-                    }`}
-                  >
-                    <Smartphone className={`w-5 h-5 mr-3 ${selectedChannels.sms ? 'text-amber-500' : 'text-[#788B81]/60'}`} />
-                    <div className="text-left">
-                      <span className="block text-sm font-bold">SMS Text</span>
-                      <span className="block text-xs opacity-70">(Cost applies)</span>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setSelectedChannels(prev => ({...prev, email: !prev.email}))}
-                    className={`flex items-center p-4 rounded-2xl border-2 transition-all ${
-                      selectedChannels.email ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm' : 'border-[#788B81]/10 hover:bg-[#F4F1EC]/30 text-[#788B81]'
-                    }`}
-                  >
-                    <Mail className={`w-5 h-5 mr-3 ${selectedChannels.email ? 'text-blue-500' : 'text-[#788B81]/60'}`} />
-                    <div className="text-left">
-                      <span className="block text-sm font-bold">Email Blast</span>
-                      <span className="block text-xs opacity-70">Free</span>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedChannels(prev => ({...prev, portal: !prev.portal}))}
-                    className={`flex items-center p-4 rounded-2xl border-2 transition-all ${
-                      selectedChannels.portal ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm' : 'border-[#788B81]/10 hover:bg-[#F4F1EC]/30 text-[#788B81]'
-                    }`}
-                  >
-                    <Globe className={`w-5 h-5 mr-3 ${selectedChannels.portal ? 'text-emerald-500' : 'text-[#788B81]/60'}`} />
-                    <div className="text-left">
-                      <span className="block text-sm font-bold">Portal Push</span>
-                      <span className="block text-xs opacity-70">Free</span>
-                    </div>
-                  </button>
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <label className="text-sm font-medium text-white/80">Message Content</label>
+                  <span className="text-xs text-white/40">{messageText.length} / 160 (SMS)</span>
                 </div>
-              </div>
-
-              {/* Message Content */}
-              <div>
-                <label className="block text-xs font-bold text-[#788B81] uppercase tracking-widest mb-3">3. Message Content</label>
-                <input 
-                  type="text" 
-                  placeholder="Subject line (e.g., Mid-Term Break Notice)" 
-                  className="w-full bg-[#F4F1EC]/50 border border-[#788B81]/20 rounded-t-xl px-4 py-3 text-sm font-bold text-[#2C3531] placeholder:text-[#788B81]/40 focus:outline-none focus:ring-2 focus:ring-[#788B81]/30 border-b-0" 
-                />
                 <textarea 
-                  rows={6} 
-                  placeholder="Write your announcement here..." 
-                  className="w-full bg-[#F4F1EC]/50 border border-[#788B81]/20 rounded-b-xl px-4 py-3 text-sm font-medium text-[#2C3531] placeholder:text-[#788B81]/40 focus:outline-none focus:ring-2 focus:ring-[#788B81]/30 resize-none"
-                ></textarea>
+                  name="message" 
+                  required 
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Type your broadcast message here..."
+                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[120px] resize-none"
+                />
               </div>
 
-              <div className="flex justify-end pt-4 border-t border-[#788B81]/10">
-                <button 
-                  onClick={handleSend}
-                  disabled={isSending || isSent || (!selectedChannels.sms && !selectedChannels.email && !selectedChannels.portal)}
-                  className={`px-8 py-3 rounded-full text-sm font-bold shadow-lg transition-all flex items-center ${
-                    isSent ? 'bg-emerald-600 hover:bg-emerald-700 text-white' :
-                    isSending ? 'bg-[#64766C] text-[#F4F1EC] opacity-80 cursor-wait' :
-                    'bg-[#788B81] hover:bg-[#64766C] text-[#F4F1EC] hover:shadow-xl hover:-translate-y-0.5'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {isSent ? (
-                    <><CheckCircle2 className="w-5 h-5 mr-2" /> Broadcast Sent Successfully</>
-                  ) : isSending ? (
-                    <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> Sending Broadcast...</>
-                  ) : (
-                    <><Send className="w-5 h-5 mr-2" /> Send Broadcast Now</>
-                  )}
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* Broadcast History Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full">
-            <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 h-full p-6">
-              
-              <div className="flex items-center space-x-2 mb-6 border-b border-[#788B81]/10 pb-4">
-                <History className="w-5 h-5 text-[#788B81]" />
-                <h2 className="text-lg font-sans font-bold text-[#2C3531]">Recent Broadcasts</h2>
-              </div>
-
-              <div className="space-y-4">
-                {dummyHistory.map((item) => (
-                  <div key={item.id} className="p-4 rounded-xl border border-[#788B81]/10 bg-[#F4F1EC]/20 hover:bg-[#F4F1EC]/50 transition-colors group cursor-pointer">
-                    <h3 className="font-bold text-[#2C3531] text-sm group-hover:text-[#788B81] transition-colors line-clamp-2">{item.title}</h3>
-                    
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-[#788B81] uppercase tracking-wider">{item.audience}</span>
-                      <span className="text-xs font-medium text-[#788B81]/60">{item.date}</span>
-                    </div>
-                    
-                    <div className="mt-2 flex gap-1">
-                      {item.channels.map(ch => (
-                        <span key={ch} className="px-2 py-0.5 bg-white border border-[#788B81]/20 rounded-md text-[9px] font-bold text-[#788B81] uppercase">
-                          {ch}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button className="w-full mt-6 py-2 text-sm font-bold text-[#788B81] hover:text-[#2C3531] transition-colors border-t border-[#788B81]/10 pt-4">
-                View All History →
+              <button 
+                type="submit" 
+                disabled={isPending || !messageText.trim()} 
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPending ? "Dispatching..." : <><Send className="w-4 h-4 mr-2" /> Send Broadcast</>}
               </button>
-            </div>
+            </form>
           </div>
         </div>
-
       </div>
+
+      {/* History Log Side */}
+      <div className="lg:col-span-2">
+        <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full min-h-[600px]">
+          <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 h-full flex flex-col overflow-hidden">
+            
+            <div className="px-8 py-6 border-b border-[#788B81]/10 flex items-center justify-between bg-[#F4F1EC]/30">
+              <h2 className="text-lg font-bold text-[#2C3531] flex items-center"><History className="w-5 h-5 mr-2 text-[#788B81]" /> Dispatch History</h2>
+              <span className="text-xs font-bold text-[#788B81] bg-white px-3 py-1 rounded-full border border-[#788B81]/20">Recent 100</span>
+            </div>
+
+            <div className="flex-1 overflow-x-auto p-0">
+              <table className="min-w-full divide-y divide-[#788B81]/10">
+                <thead className="bg-white sticky top-0 z-10">
+                  <tr>
+                    <th className="px-8 py-4 text-left text-xs font-bold text-[#788B81] uppercase tracking-widest border-b border-[#788B81]/10">Sent At</th>
+                    <th className="px-8 py-4 text-left text-xs font-bold text-[#788B81] uppercase tracking-widest border-b border-[#788B81]/10">Recipient</th>
+                    <th className="px-8 py-4 text-left text-xs font-bold text-[#788B81] uppercase tracking-widest border-b border-[#788B81]/10">Channel</th>
+                    <th className="px-8 py-4 text-left text-xs font-bold text-[#788B81] uppercase tracking-widest border-b border-[#788B81]/10">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-[#788B81]/5">
+                  {logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-[#F4F1EC]/20 transition-colors">
+                      <td className="px-8 py-4 whitespace-nowrap text-sm text-[#788B81]">
+                        {log.sent_at ? format(new Date(log.sent_at), 'MMM d, yyyy HH:mm') : 'Unknown'}
+                      </td>
+                      <td className="px-8 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-[#2C3531]">{log.recipient_user?.first_name} {log.recipient_user?.last_name}</div>
+                        <div className="text-xs text-[#788B81]">{log.recipient_phone}</div>
+                      </td>
+                      <td className="px-8 py-4 whitespace-nowrap">
+                        {log.channel === 'SMS' ? (
+                          <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                            <Smartphone className="w-3 h-3 mr-1" /> SMS
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                            <Mail className="w-3 h-3 mr-1" /> EMAIL
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-8 py-4 whitespace-nowrap">
+                        {log.status === 'SENT' && <span className="text-xs font-bold text-emerald-600 flex items-center"><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Sent</span>}
+                        {log.status === 'FAILED' && <span className="text-xs font-bold text-red-600 flex items-center"><AlertCircle className="w-3.5 h-3.5 mr-1" /> Failed</span>}
+                        {log.status === 'PENDING' && <span className="text-xs font-bold text-amber-600">Pending</span>}
+                      </td>
+                    </tr>
+                  ))}
+                  {logs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-8 py-20 text-center">
+                        <Megaphone className="w-12 h-12 text-[#788B81]/30 mx-auto mb-4" />
+                        <h3 className="text-lg font-bold text-[#2C3531]">No Broadcasts Yet</h3>
+                        <p className="text-[#788B81] mt-2 text-sm max-w-sm mx-auto">
+                          Messages you send from the composer will appear here in the dispatch history log.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
