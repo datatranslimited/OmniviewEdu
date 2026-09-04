@@ -28,8 +28,8 @@ export default function StudentDashboardClient() {
         
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full">
-            <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 p-8 h-full flex flex-col">
+          <div className="bg-white/40 p-2 sm:p-2 rounded-[2rem] sm:rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full">
+            <div className="bg-white rounded-[calc(2rem-0.5rem)] sm:rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 p-4 sm:p-6 md:p-8 h-full flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-[#2C3531]">Next Classes</h2>
               </div>
@@ -60,8 +60,8 @@ export default function StudentDashboardClient() {
 
         {/* Right Column */}
         <div className="space-y-6">
-          <div className="bg-white/40 p-2 rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full">
-            <div className="bg-white rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 p-8 h-full flex flex-col">
+          <div className="bg-white/40 p-2 sm:p-2 rounded-[2rem] sm:rounded-[2.5rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] h-full">
+            <div className="bg-white rounded-[calc(2rem-0.5rem)] sm:rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 p-4 sm:p-6 md:p-8 h-full flex flex-col">
               <h2 className="text-xl font-bold text-[#2C3531] mb-6">Quick Links</h2>
               <div className="grid grid-cols-2 gap-4 flex-1">
                 {[
