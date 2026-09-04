@@ -53,7 +53,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     // We will let the tenant layout handle correct routing based on role
     const url = request.nextUrl.clone()
-    url.pathname = '/tenant/admin' 
+    url.pathname = '/tenant' 
     return NextResponse.redirect(url)
   }
 
