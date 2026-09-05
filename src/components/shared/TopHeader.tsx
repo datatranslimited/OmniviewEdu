@@ -6,9 +6,15 @@ import { useState, useRef, useEffect } from 'react'
 
 export default function TopHeader({ 
   schoolName = "My School", 
+  userEmail = "user@omniview.edu",
+  userFirstName = "User",
+  userLastName = "",
   onMenuClick 
 }: { 
   schoolName?: string
+  userEmail?: string
+  userFirstName?: string
+  userLastName?: string
   onMenuClick?: () => void 
 }) {
   const router = useRouter()
@@ -87,8 +93,8 @@ export default function TopHeader({
           {isProfileOpen && (
             <div className="absolute right-0 mt-3 w-48 rounded-2xl bg-white/90 backdrop-blur-xl border border-[#788B81]/20 shadow-xl py-2 z-50 animate-[fadeIn_0.2s_ease-out]">
               <div className="px-4 py-3 border-b border-[#788B81]/10">
-                <p className="text-sm font-bold text-[#2C3531]">Admin User</p>
-                <p className="text-xs font-medium text-[#788B81] truncate">admin@omniview.edu</p>
+                <p className="text-sm font-bold text-[#2C3531]">{userFirstName} {userLastName}</p>
+                <p className="text-xs font-medium text-[#788B81] truncate">{userEmail}</p>
               </div>
               <div className="py-2">
                 <Link 

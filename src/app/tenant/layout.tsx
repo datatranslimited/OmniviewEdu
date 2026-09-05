@@ -30,7 +30,13 @@ export default async function DashboardLayout({
 
 
   return (
-    <DashboardLayoutClient userRole={appUser.role} schoolName={appUser.tenant?.name || "My School"}>
+    <DashboardLayoutClient 
+      userRole={appUser.role} 
+      schoolName={appUser.tenant?.name || "My School"}
+      userEmail={appUser.email}
+      userFirstName={appUser.first_name}
+      userLastName={appUser.last_name}
+    >
       {children}
     </DashboardLayoutClient>
   )

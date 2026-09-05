@@ -6,10 +6,16 @@ import TopHeader from './TopHeader'
 export default function DashboardLayoutClient({ 
   userRole, 
   schoolName, 
+  userEmail,
+  userFirstName,
+  userLastName,
   children 
 }: { 
   userRole: string
   schoolName?: string
+  userEmail?: string
+  userFirstName?: string
+  userLastName?: string
   children: React.ReactNode 
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -30,6 +36,9 @@ export default function DashboardLayoutClient({
         <TopHeader 
           schoolName={schoolName} 
           onMenuClick={() => setSidebarOpen(true)} 
+          userEmail={userEmail}
+          userFirstName={userFirstName}
+          userLastName={userLastName}
         />
         
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full flex flex-col">
