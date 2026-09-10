@@ -2,35 +2,16 @@
 import Link from "next/link"
 import { formatUnambiguousDate } from "@/lib/formatDate"
 
-// --- DUMMY DATA ---
-const metrics = {
-  totalStudents: 452,
-  activeStudents: 440,
-  totalStaff: 48,
-  attendanceRate: "94%",
-  revenueCollected: 9250000,
-  revenueExpected: 15500000
-}
-
-const recentActivities = [
-  { id: 1, type: "PAYMENT", description: "Payment of ₦150,000 received for John Doe (Term 1 Tuition)", time: new Date(Date.now() - 1000 * 60 * 30).toISOString() }, // 30 mins ago
-  { id: 2, type: "ENROLLMENT", description: "New student Neriah Igbowe was enrolled into JSS 1 A", time: new Date(Date.now() - 1000 * 60 * 120).toISOString() }, // 2 hours ago
-  { id: 3, type: "ATTENDANCE", description: "Primary 1 Gold attendance marked (28/30 present)", time: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() }, // 1 day ago
-  { id: 4, type: "STAFF", description: "Mr. Ebenezer Ali's profile was updated", time: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() }, // 2 days ago
-]
-
-export default function AdminDashboardClient() {
+export default function AdminDashboardClient({ 
+  metrics,
+  activeSessionName
+}: {
+  metrics: { totalStudents: number; activeStudents: number; totalStaff: number }
+  activeSessionName: string
+}) {
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount)
-  }
-
-  const getTimeAgo = (dateString: string) => {
-    const diff = Date.now() - new Date(dateString).getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    if (hours < 1) return "Just now"
-    if (hours < 24) return `${hours} hours ago`
-    return formatUnambiguousDate(dateString)
   }
 
   return (
@@ -39,7 +20,7 @@ export default function AdminDashboardClient() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-serif text-[#2C3531] tracking-normal leading-tight mb-2">Welcome back, Admin!</h1>
-          <p className="text-[#788B81] font-medium leading-relaxed">Session: 2024/2025 • First Term</p>
+          <p className="text-[#788B81] font-medium leading-relaxed">Session: {activeSessionName}</p>
         </div>
       </div>
 
@@ -68,7 +49,6 @@ export default function AdminDashboardClient() {
               <h3 className="text-4xl font-serif text-[#2C3531]">{metrics.totalStaff}</h3>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-[#788B81] font-bold bg-[#F4F1EC] px-2 py-0.5 rounded mr-2">Online</span>
               <span className="text-[#788B81]/60">across all departments</span>
             </div>
           </div>
@@ -76,34 +56,30 @@ export default function AdminDashboardClient() {
 
         {/* Attendance Card */}
         <div className="bg-white/40 p-2 rounded-[2rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-          <div className="bg-white rounded-[calc(2rem-0.5rem)] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 flex flex-col justify-between h-full">
+          <div className="bg-white rounded-[calc(2rem-0.5rem)] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 flex flex-col justify-between h-full opacity-50">
             <div>
               <p className="text-[11px] font-bold text-[#788B81] uppercase tracking-widest mb-1">Today's Attendance</p>
-              <h3 className="text-4xl font-serif text-[#2C3531]">{metrics.attendanceRate}</h3>
+              <h3 className="text-4xl font-serif text-[#2C3531]">0%</h3>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-[#788B81] font-bold flex items-center mr-2">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                +2%
-              </span>
-              <span className="text-[#788B81]/60">vs yesterday</span>
+              <span className="text-[#788B81]/60">No data recorded today</span>
             </div>
           </div>
         </div>
 
         {/* Revenue Card */}
         <div className="bg-white/40 p-2 rounded-[2rem] backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-          <div className="bg-white rounded-[calc(2rem-0.5rem)] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 flex flex-col justify-between h-full">
+          <div className="bg-white rounded-[calc(2rem-0.5rem)] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 flex flex-col justify-between h-full opacity-50">
             <div>
               <p className="text-[11px] font-bold text-[#788B81] uppercase tracking-widest mb-1">Term Revenue</p>
-              <h3 className="text-3xl font-serif text-[#2C3531]">{formatCurrency(metrics.revenueCollected)}</h3>
+              <h3 className="text-3xl font-serif text-[#2C3531]">{formatCurrency(0)}</h3>
             </div>
             <div className="mt-4 w-full bg-[#F4F1EC] rounded-full h-2 mb-2">
-              <div className="bg-[#788B81] h-2 rounded-full" style={{ width: '60%' }}></div>
+              <div className="bg-[#788B81] h-2 rounded-full" style={{ width: '0%' }}></div>
             </div>
             <div className="flex justify-between text-[10px] text-[#788B81] font-bold uppercase tracking-wider">
               <span>Collected</span>
-              <span>{formatCurrency(metrics.revenueExpected)} Target</span>
+              <span>{formatCurrency(0)} Target</span>
             </div>
           </div>
         </div>
@@ -154,32 +130,9 @@ export default function AdminDashboardClient() {
             <div className="bg-white rounded-[calc(2rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,1)] border border-[#788B81]/10 h-full overflow-hidden">
               <div className="px-6 py-5 border-b border-[#788B81]/10 flex justify-between items-center">
                 <h3 className="text-xl font-serif text-[#2C3531]">Recent Activity</h3>
-                <button className="text-sm font-bold text-[#788B81] hover:text-[#2C3531] transition-colors uppercase tracking-wider">View All</button>
               </div>
-              <div className="p-6">
-                <ul className="space-y-6">
-                  {recentActivities.map((activity, index) => (
-                    <li key={activity.id} className="relative flex gap-x-4">
-                      <div className={
-                        `relative flex h-10 w-10 flex-none items-center justify-center rounded-full ring-2 ring-white shadow-sm
-                        ${activity.type === 'PAYMENT' ? 'bg-[#788B81]/10 text-[#788B81]' :
-                          activity.type === 'ENROLLMENT' ? 'bg-[#2C3531]/10 text-[#2C3531]' :
-                          'bg-[#F4F1EC] text-[#788B81]'}`
-                      }>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      {index !== recentActivities.length - 1 && (
-                        <span className="absolute left-5 top-10 -ml-px h-full w-0.5 bg-[#788B81]/10" aria-hidden="true"></span>
-                      )}
-                      <div className="flex-auto rounded-md py-1">
-                        <p className="text-sm font-medium text-[#2C3531]">{activity.description}</p>
-                        <p className="text-xs text-[#788B81] font-medium mt-1">{getTimeAgo(activity.time)}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <div className="p-12 text-center text-[#788B81]">
+                <p className="font-medium">No recent activity to display.</p>
               </div>
             </div>
           </div>

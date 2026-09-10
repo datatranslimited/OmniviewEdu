@@ -101,7 +101,7 @@ export default function Sidebar({
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex h-16 items-center justify-between border-b border-[#64766C] px-5">
-          <Link href={links[0].href} className="text-xl sm:text-2xl font-serif font-bold tracking-normal leading-none text-[#F4F1EC] hover:text-white transition-colors truncate">
+          <Link href="/" className="text-xl sm:text-2xl font-serif font-bold tracking-normal leading-none text-[#F4F1EC] hover:text-white transition-colors truncate">
             OmniviewEdu
           </Link>
           {/* Mobile Close Button */}
@@ -143,6 +143,10 @@ export default function Sidebar({
       </div>
       
         <div className="border-t border-white/10 p-4 bg-gradient-to-t from-black/20 to-transparent">
+          <Link href="/" className="flex items-center px-4 py-3 mb-3 text-sm font-bold text-[#F4F1EC]/90 bg-black/20 hover:bg-black/40 rounded-xl transition-colors w-full group">
+            <Globe className="w-4 h-4 mr-3 text-[#F4F1EC]/70 group-hover:text-emerald-400 transition-colors" />
+            Go to Landing Page
+          </Link>
           <div className="flex items-center px-2 py-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
             <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shadow-inner">
               {userRole.charAt(0)}

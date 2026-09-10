@@ -3,18 +3,17 @@
 import { Building2, Users, Activity, PlusCircle } from "lucide-react"
 import Link from "next/link"
 
-export default function PlatformClient() {
-  // Mock Data
+export default function PlatformClient({ 
+  tenants, 
+  totalStudents 
+}: { 
+  tenants: any[]
+  totalStudents: number 
+}) {
   const stats = [
-    { label: "Active Tenants", value: "142", icon: Building2 },
-    { label: "Total Students", value: "84,302", icon: Users },
+    { label: "Active Tenants", value: tenants.length.toString(), icon: Building2 },
+    { label: "Total Students", value: totalStudents.toLocaleString(), icon: Users },
     { label: "Platform Health", value: "99.9%", icon: Activity },
-  ]
-
-  const tenants = [
-    { id: 1, name: "Omniview Academy (Demo)", plan: "Enterprise", students: 1205, status: "Active" },
-    { id: 2, name: "St. Jude International", plan: "Pro", students: 850, status: "Active" },
-    { id: 3, name: "Lagos Tech High", plan: "Basic", students: 432, status: "Trial Ending" },
   ]
 
   return (
@@ -58,7 +57,6 @@ export default function PlatformClient() {
                 <tr className="border-b border-[#788B81]/10">
                   <th className="pb-4 text-xs font-bold text-[#788B81] uppercase tracking-widest">School Name</th>
                   <th className="pb-4 text-xs font-bold text-[#788B81] uppercase tracking-widest">Plan</th>
-                  <th className="pb-4 text-xs font-bold text-[#788B81] uppercase tracking-widest">Students</th>
                   <th className="pb-4 text-xs font-bold text-[#788B81] uppercase tracking-widest">Status</th>
                   <th className="pb-4 text-xs font-bold text-[#788B81] uppercase tracking-widest text-right">Actions</th>
                 </tr>
@@ -67,13 +65,10 @@ export default function PlatformClient() {
                 {tenants.map(tenant => (
                   <tr key={tenant.id} className="hover:bg-[#F4F1EC]/50 transition-colors">
                     <td className="py-5 font-semibold text-[#2C3531]">{tenant.name}</td>
-                    <td className="py-5"><span className="px-3 py-1 bg-[#F4F1EC] text-[#2C3531] rounded-full text-xs font-bold">{tenant.plan}</span></td>
-                    <td className="py-5 text-[#788B81] font-medium">{tenant.students.toLocaleString()}</td>
+                    <td className="py-5"><span className="px-3 py-1 bg-[#F4F1EC] text-[#2C3531] rounded-full text-xs font-bold">{tenant.subscription_plan}</span></td>
                     <td className="py-5">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        tenant.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {tenant.status}
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700`}>
+                        Active
                       </span>
                     </td>
                     <td className="py-5 text-right">
@@ -81,6 +76,13 @@ export default function PlatformClient() {
                     </td>
                   </tr>
                 ))}
+                {tenants.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-[#788B81] font-medium">
+                      No schools provisioned yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
