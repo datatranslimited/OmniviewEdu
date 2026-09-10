@@ -1,4 +1,6 @@
-import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import prisma from '@/lib/prisma'
 import DashboardLayoutClient from '@/components/shared/DashboardLayoutClient'
 
 export default async function PlatformLayout({
@@ -6,11 +8,29 @@ export default async function PlatformLayout({
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const mockRole = cookieStore.get('mock_role')?.value || 'PLATFORM_OWNER'
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/login')
+  }
+
+  const appUser = await prisma.user.findUnique({
+    where: { id: user.id },
+  })
+
+  if (!appUser || appUser.role !== 'PLATFORM_OWNER') {
+    redirect('/tenant')
+  }
   
   return (
-    <DashboardLayoutClient userRole={mockRole} schoolName="OmniviewEdu Global HQ">
+    <DashboardLayoutClient 
+      userRole={appUser.role} 
+      schoolName="OmniviewEdu Global HQ"
+      userEmail={appUser.email}
+      userFirstName={appUser.first_name}
+      userLastName={appUser.last_name}
+    >
       {children}
     </DashboardLayoutClient>
   )

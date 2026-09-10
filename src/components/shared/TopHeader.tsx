@@ -3,7 +3,7 @@ import { Bell, Search, Menu, LogOut, Settings, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
-
+import { logoutUser } from '@/app/auth/login/actions'
 export default function TopHeader({ 
   schoolName = "My School", 
   userEmail = "user@omniview.edu",
@@ -32,10 +32,8 @@ export default function TopHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const handleLogout = () => {
-    // Clear the mock_role cookie by setting it to expire in the past
-    document.cookie = "mock_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    router.push('/login')
+  const handleLogout = async () => {
+    await logoutUser()
   }
 
   return (

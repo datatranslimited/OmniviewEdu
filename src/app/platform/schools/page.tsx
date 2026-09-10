@@ -1,4 +1,5 @@
 import { Building2 } from "lucide-react"
+import Link from "next/link"
 
 export default function ProvisionedSchoolsPage() {
   return (
@@ -17,9 +18,9 @@ export default function ProvisionedSchoolsPage() {
           </div>
           <h2 className="text-2xl font-serif text-stone-900 mb-2">Detailed School Management</h2>
           <p className="text-stone-500 max-w-md mx-auto mb-8">This module will provide deep configuration overrides, domain mapping, and API key management for each provisioned school.</p>
-          <button className="px-6 py-3 bg-stone-900 hover:bg-black text-[#FDFBF7] rounded-full font-semibold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-lg">
+          <Link href="/platform/schools/new" className="px-6 py-3 bg-stone-900 hover:bg-black text-[#FDFBF7] rounded-full font-semibold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-lg inline-block">
             Provision New School
-          </button>
+          </Link>
         </div>
       </div>
     </div>

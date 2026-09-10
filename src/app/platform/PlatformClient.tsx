@@ -1,6 +1,7 @@
 "use client"
 
 import { Building2, Users, Activity, PlusCircle } from "lucide-react"
+import Link from "next/link"
 
 export default function PlatformClient() {
   // Mock Data
@@ -24,10 +25,10 @@ export default function PlatformClient() {
           <h1 className="text-3xl font-serif text-[#2C3531] tracking-normal leading-tight mb-2">Global Overview</h1>
           <p className="text-[#788B81] font-medium leading-relaxed">Manage all provisioned schools and platform health.</p>
         </div>
-        <button className="flex items-center px-6 py-3 bg-[#788B81] hover:bg-[#64766C] text-[#F4F1EC] rounded-full font-semibold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]">
+        <Link href="/platform/schools/new" className="flex items-center px-6 py-3 bg-[#788B81] hover:bg-[#64766C] text-[#F4F1EC] rounded-full font-semibold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]">
           <PlusCircle className="w-5 h-5 mr-2" />
           Provision New School
-        </button>
+        </Link>
       </div>
 
       {/* Stats - Double Bezel style */}

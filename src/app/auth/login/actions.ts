@@ -33,7 +33,9 @@ export async function loginWithEmail(formData: FormData) {
   }
 
   // Redirect based on role
-  if (appUser.role === 'SUPER_ADMIN') {
+  if (appUser.role === 'PLATFORM_OWNER') {
+    redirect("/platform")
+  } else if (appUser.role === 'SUPER_ADMIN') {
     redirect("/tenant/admin")
   } else if (appUser.role === 'TEACHER') {
     redirect("/tenant/teacher")
@@ -44,4 +46,10 @@ export async function loginWithEmail(formData: FormData) {
   } else {
     redirect("/tenant/dashboard")
   }
+}
+
+export async function logoutUser() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect("/auth/login")
 }
